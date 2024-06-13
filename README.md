@@ -10,5 +10,5 @@ Previous geometrical acoustics-based room acoustic simulation methods have diffi
 
 This is the codes for the data generation of PAWS-Dataset.  We provide example Jupyter notebook to let users make their own simulation data.
 
-Our dataset is avaliable in <https://huggingface.co/datasets/Tamamo0v0/PAWS-Dataset/tree/main>
+Our dataset is avaliable at <https://huggingface.co/datasets/Tamamo0v0/PAWS-Dataset/tree/main>
 
