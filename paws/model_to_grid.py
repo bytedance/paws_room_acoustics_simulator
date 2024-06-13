@@ -33,7 +33,6 @@ def make_source_2d(x_pos:int,y_pos:int,radius:int,Nx:int,Ny:int,magnitude):
 
     return source
 
-
 def class_grid_to_medium_grid(cls_grid:np.ndarray,lookup_dict:dict,base_sound_speed=343,base_density=100,base_alpha_coef=0.75):
 
     Nx,Ny = cls_grid.shape
@@ -98,9 +97,41 @@ def make_source_2d(x_pos:int,y_pos:int,radius:int,Nx:int,Ny:int,magnitude:int):
 
     return source
 
+
+def make_new_source(p0,p,ux,uy,Nx:int,Ny:int):
+    #initial source
+    source = kSource()
+
+    # source.p0 = p0
+
+    source.p = np.array(p)
+    source.p_mask =np.ones((Nx, Ny), dtype=bool)
+
+    # source.ux = np.array(ux)
+    # source.uy = np.array(uy)
+    # source.u_mask =np.ones((Nx, Ny), dtype=bool)
+
+
+    # print(ux.shape)
+
+
+    # ux_size = source.ux[0,:].size
+    # uy_size = source.uy[0,:].size 
+    # u_sum = np.sum(source.u_mask)
+
+    # print(ux_size)
+    # print(uy_size)
+    # print(u_sum)
+
+
+
+    return source
+
+
 def make_sensor_2d(sensor_mask):
     sensor = kSensor()
     sensor.mask = sensor_mask
+    sensor.record = ["p","u"]
 
     return sensor
 

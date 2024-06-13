@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import pickle
+import h5py
 
 from .utils import mu_law, inv_mu_law, analog_to_digital, digital_to_analog
 
@@ -97,6 +98,45 @@ def encode_tensor_to_video(tensor, video_path, fps=100):
     print("Write video to {}".format(video_path))
 
     return v_scales
+
+
+
+# def encode_hdf5_to_video(hdf5_path,video_path, fps=100)
+
+
+
+#     h5_path = "C:\\Users\\Administrator\\AppData\\Local\\Temp13-Jun-2024-03-17-45_kwave_input.h5"
+
+
+
+#     with h5py.File(h5_path,"r") as f:
+#         # for key in f.keys():
+#         #     #print(f[key], key, f[key].name, f[key].value) # 因为这里有group对象它是没有value属性的,故会异常。另外字符串读出来是字节流，需要解码成字符串。
+#         #     print(f[key], key, f[key].name) 
+#         #     print("----------")
+
+
+#         p_data = f["p"]
+
+#         frames_num = p_data.shape[1]
+
+
+#         #tensor为即将需要写入的数据，随后替换
+#         tensor = pressure_dist
+#         frames_num = tensor.shape[0]
+
+#         sub_v_scales = np.max(np.abs(tensor), axis=(1, 2))
+#         tmp = sub_v_scales[:, None, None]
+
+#         tensor /= tmp
+#         tensor = mu_law(tensor)
+#         tensor = analog_to_digital(tensor)
+
+#         for n in range(frames_num):
+#             out.write(tensor[n])
+
+
+
 
 
 
