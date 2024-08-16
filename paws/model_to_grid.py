@@ -12,7 +12,6 @@ from kwave.utils.kwave_array import kWaveArray
 from kwave.utils.colormap import get_color_map
 from kwave.utils.signals import tone_burst
 
-import open3d as o3d
 import random
 # import open3d.core as o3c
 

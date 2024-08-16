@@ -1,0 +1,5 @@
+k-wave-python
+matplotlib
+opencv-python
+h5py
+tqdm

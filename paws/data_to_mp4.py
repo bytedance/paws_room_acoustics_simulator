@@ -68,7 +68,7 @@ def load_tensor(path, width, height):
     loaded_dict = loaded.item()
 
     data = loaded_dict["p"]
-    data = data.reshape((data.shape[0], width, height))
+    data = data.reshape((data.shape[0], width, height),order='F')
 
     return data
 
@@ -121,8 +121,8 @@ def encode_hdf5_to_video(hdf5_path,
         width = room_size
 
         current_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-        video_path = os.path.join(save_dir,save_filename_prefix + current_time + "_video.mp4")
-        meta_path = os.path.join(save_dir,save_filename_prefix + current_time + "_meta.pkl")
+        video_path = os.path.join(save_dir,save_filename_prefix + "_" + current_time + "_video.mp4")
+        meta_path = os.path.join(save_dir,save_filename_prefix + "_" + current_time + "_meta.pkl")
 
         out = cv2.VideoWriter(
             filename=video_path, 
@@ -140,7 +140,7 @@ def encode_hdf5_to_video(hdf5_path,
             data_slice = hf["p"][0,current_frame:current_frame + slice_frame_n].copy()
 
             pressure_dist = data_slice[0::down_sample_ratio]
-            pressure_dist = pressure_dist.reshape((pressure_dist.shape[0], height,width))
+            pressure_dist = pressure_dist.reshape((pressure_dist.shape[0], height,width),order='F')
 
             sub_v_scales = np.max(np.abs(pressure_dist), axis=(1, 2))
             tmp = sub_v_scales[:, None, None]
