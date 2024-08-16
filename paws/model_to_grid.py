@@ -5,6 +5,7 @@ from kwave.kmedium import kWaveMedium
 from kwave.ksensor import kSensor
 from kwave.ksource import kSource
 from kwave.kspaceFirstOrder2D import kspace_first_order_2d_gpu
+from kwave.kspaceFirstOrder3D import kspaceFirstOrder3DG
 from kwave.options.simulation_execution_options import SimulationExecutionOptions
 from kwave.options.simulation_options import SimulationOptions
 from kwave.utils.kwave_array import kWaveArray
@@ -107,24 +108,6 @@ def make_new_source(p0,p,ux,uy,Nx:int,Ny:int):
     source.p = np.array(p)
     source.p_mask =np.ones((Nx, Ny), dtype=bool)
 
-    # source.ux = np.array(ux)
-    # source.uy = np.array(uy)
-    # source.u_mask =np.ones((Nx, Ny), dtype=bool)
-
-
-    # print(ux.shape)
-
-
-    # ux_size = source.ux[0,:].size
-    # uy_size = source.uy[0,:].size 
-    # u_sum = np.sum(source.u_mask)
-
-    # print(ux_size)
-    # print(uy_size)
-    # print(u_sum)
-
-
-
     return source
 
 
@@ -164,8 +147,14 @@ def point_cloud_voxelization(vertices_list,class_id_list,grid_range):
 #     return
 
 
-
-def simulation_2d(Nx,Ny,dx,dy,source,medium,sensor,Nt:float=None,dt:float=None):
+def simulation_2d(Nx,Ny,dx,dy,source,medium,sensor,
+                  Nt:float=None,
+                  dt:float=None,
+                  data_path=None,
+                  output_filename=None,
+                  input_fileneme=None,
+                  return_tensor = True,
+                  ):
 
     #initial grid
     kgrid = kWaveGrid([Nx, Ny], [dx, dy])
@@ -186,10 +175,66 @@ def simulation_2d(Nx,Ny,dx,dy,source,medium,sensor,Nt:float=None,dt:float=None):
     simulation_options = SimulationOptions(
         save_to_disk=True,
         data_cast='single',
+        data_path=data_path,
+        output_filename=output_filename,
+        input_filename=input_fileneme
     )
 
-    sim_data = kspace_first_order_2d_gpu(kgrid, source, sensor, medium, simulation_options, execution_options)
 
-    return sim_data
+    print(simulation_options)
+
+    if return_tensor:
+        sim_data = kspace_first_order_2d_gpu(kgrid, source, sensor, medium, simulation_options, execution_options)
+        return sim_data
+    
+    else:
+        kspace_first_order_2d_gpu(kgrid, source, sensor, medium, simulation_options, execution_options)
+        return
 
 
+
+
+def simulation_3d(Nx,Ny,Nz,dx,dy,dz,source,medium,sensor,
+                  Nt:float=None,
+                  dt:float=None,
+                  data_path=None,
+                  output_filename=None,
+                  input_fileneme=None,
+                  return_tensor = True,
+                  ):
+
+    #initial grid
+    kgrid = kWaveGrid([Nx, Ny, Nz], [dx, dy, dz])
+
+
+    #define Nt dt based on medium sound speed
+    kgrid.makeTime(medium.sound_speed)
+
+    if Nt != None:
+        kgrid.Nt = Nt
+
+    if dt != None:
+        kgrid.dt = dt
+
+    #simulation
+    execution_options = SimulationExecutionOptions(is_gpu_simulation=True)
+
+    simulation_options = SimulationOptions(
+        save_to_disk=True,
+        data_cast='single',
+        data_path=data_path,
+        output_filename=output_filename,
+        input_filename=input_fileneme
+    )
+
+
+    print(simulation_options)
+
+    if return_tensor:
+            
+        sim_data = kspaceFirstOrder3DG(kgrid, source, sensor, medium, simulation_options, execution_options)
+        return sim_data
+    
+    else:
+        kspaceFirstOrder3DG(kgrid, source, sensor, medium, simulation_options, execution_options)
+        return

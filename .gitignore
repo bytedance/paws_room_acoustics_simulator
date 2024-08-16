@@ -1,2 +1,6 @@
 lab.py
 lab.ipynb
+/data
+/generated_data
+/temp_hdf5
+

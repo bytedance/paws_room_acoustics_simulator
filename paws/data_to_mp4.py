@@ -2,6 +2,9 @@ import numpy as np
 import cv2
 import pickle
 import h5py
+import os
+import datetime
+import tqdm
 
 from .utils import mu_law, inv_mu_law, analog_to_digital, digital_to_analog
 
@@ -101,76 +104,72 @@ def encode_tensor_to_video(tensor, video_path, fps=100):
 
 
 
-# def encode_hdf5_to_video(hdf5_path,video_path, fps=100)
+def encode_hdf5_to_video(hdf5_path,
+                         save_dir,
+                         room_size,
+                         save_filename_prefix="",
+                         sub_frame_max=100,
+                         down_sample_ratio=10,
+                         fps=100):
 
+    with h5py.File(hdf5_path,"r") as hf:
 
+        frames_num= hf["p"].shape[1]
+        # sub_frame_max = 100   #current best
+        # room_size = 256
+        height = room_size
+        width = room_size
 
-#     h5_path = "C:\\Users\\Administrator\\AppData\\Local\\Temp13-Jun-2024-03-17-45_kwave_input.h5"
+        current_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        video_path = os.path.join(save_dir,save_filename_prefix + current_time + "_video.mp4")
+        meta_path = os.path.join(save_dir,save_filename_prefix + current_time + "_meta.pkl")
 
+        out = cv2.VideoWriter(
+            filename=video_path, 
+            fourcc=cv2.VideoWriter_fourcc(*'MP4V'),
+            fps=fps, 
+            frameSize=(height, width), 
+            isColor=False
+        )
 
+        v_scales = np.array([])
 
-#     with h5py.File(h5_path,"r") as f:
-#         # for key in f.keys():
-#         #     #print(f[key], key, f[key].name, f[key].value) # 因为这里有group对象它是没有value属性的,故会异常。另外字符串读出来是字节流，需要解码成字符串。
-#         #     print(f[key], key, f[key].name) 
-#         #     print("----------")
+        for current_frame in tqdm.tqdm(range(0,frames_num,sub_frame_max)):
 
+            slice_frame_n = min(sub_frame_max, frames_num-current_frame)
+            data_slice = hf["p"][0,current_frame:current_frame + slice_frame_n].copy()
 
-#         p_data = f["p"]
+            pressure_dist = data_slice[0::down_sample_ratio]
+            pressure_dist = pressure_dist.reshape((pressure_dist.shape[0], height,width))
 
-#         frames_num = p_data.shape[1]
+            sub_v_scales = np.max(np.abs(pressure_dist), axis=(1, 2))
+            tmp = sub_v_scales[:, None, None]
+            pressure_dist /= tmp
 
+            pressure_dist = mu_law(pressure_dist)
 
-#         #tensor为即将需要写入的数据，随后替换
-#         tensor = pressure_dist
-#         frames_num = tensor.shape[0]
+            pressure_dist = analog_to_digital(pressure_dist)
 
-#         sub_v_scales = np.max(np.abs(tensor), axis=(1, 2))
-#         tmp = sub_v_scales[:, None, None]
+            for n in range(pressure_dist.shape[0]):
+                out.write(pressure_dist[n])
+                 
+            v_scales = np.concatenate((v_scales,sub_v_scales),0)
 
-#         tensor /= tmp
-#         tensor = mu_law(tensor)
-#         tensor = analog_to_digital(tensor)
+            #free memory
+            # del pressure_dist
+            # gc.collect()
 
-#         for n in range(frames_num):
-#             out.write(tensor[n])
+        out.release()
+        print("Write out video to {}".format(video_path))
 
+        # print(v_scales)
 
+        meta = {
+            "v_scales": v_scales
+        }
 
-
-
-
-
-def encode_tensor_to_video_new(tensor, video_path, fps=100):
-
-    frames_num, width, height = tensor.shape
-
-    v_scales = np.max(np.abs(tensor), axis=(1, 2))
-    
-    tmp = v_scales[:, None, None]
-
-    tensor /= tmp
-    tensor = mu_law(tensor)
-    tensor = analog_to_digital(tensor)
-
-    out = cv2.VideoWriter(
-        filename=video_path, 
-        fourcc=cv2.VideoWriter_fourcc(*'MP4V'),
-        fps=fps, 
-        frameSize=(height, width), 
-        isColor=False
-    )
-
-    for n in range(frames_num):
-        out.write(tensor[n])
-        
-    out.release()
-    
-    print("Write video to {}".format(video_path))
-
-    return v_scales
-
-
+        pickle.dump(meta, open(meta_path, "wb"))
+        print("Write out meta to {}".format(meta_path))
 
 
 
