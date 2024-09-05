@@ -3,4 +3,4 @@ lab.ipynb
 /data
 /generated_data
 /temp_hdf5
-
+**/__pycache__
