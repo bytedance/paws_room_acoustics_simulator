@@ -34,7 +34,7 @@ generated_data
 └── metadata
 ```
 
-We also provided a user example in example.ipynb.
+We also provided a user example in [example.ipynb](example.ipynb).
 
 
 ## 3. [License](LICENSE)
