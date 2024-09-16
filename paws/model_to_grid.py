@@ -18,21 +18,6 @@ import random
 import os
 import math
 
-def make_source_2d(x_pos:int,y_pos:int,radius:int,Nx:int,Ny:int,magnitude):
-
-    #initial source
-    source = kSource()
-    p0 = np.zeros((Nx, Ny), dtype=float)
-
-    for x in range(x_pos-radius-1,x_pos+radius+1):
-        for y in range(y_pos-radius-1,y_pos+radius+1):
-            if (x+0.5-x_pos)**2 + (y+0.5-y_pos)**2 < radius:
-                p0[x,y] = magnitude
-
-    source.p0 = p0
-
-    return source
-
 def class_grid_to_medium_grid(cls_grid:np.ndarray,lookup_dict:dict,base_sound_speed=343,base_density=100,base_alpha_coef=0.75):
 
     Nx,Ny = cls_grid.shape
