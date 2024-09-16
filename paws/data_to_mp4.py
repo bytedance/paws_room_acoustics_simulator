@@ -106,7 +106,8 @@ def encode_tensor_to_video(tensor, video_path, fps=100):
 
 def encode_hdf5_to_video(hdf5_path,
                          save_dir,
-                         room_size,
+                         height,
+                         width,
                          save_filename_prefix="",
                          sub_frame_max=100,
                          down_sample_ratio=10,
@@ -117,16 +118,15 @@ def encode_hdf5_to_video(hdf5_path,
         frames_num= hf["p"].shape[1]
         # sub_frame_max = 100   #current best
         # room_size = 256
-        height = room_size
-        width = room_size
+        height = height
+        width = width
 
-        current_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-        video_path = os.path.join(save_dir,save_filename_prefix + "_" + current_time + "_video.mp4")
-        meta_path = os.path.join(save_dir,save_filename_prefix + "_" + current_time + "_meta.pkl")
+        video_path = os.path.join(save_dir,save_filename_prefix + "_video.mp4")
+        meta_path = os.path.join(save_dir,save_filename_prefix + "_meta.pkl")
 
         out = cv2.VideoWriter(
             filename=video_path, 
-            fourcc=cv2.VideoWriter_fourcc(*'MP4V'),
+            fourcc=cv2.VideoWriter_fourcc(*'mp4v'),
             fps=fps, 
             frameSize=(height, width), 
             isColor=False
