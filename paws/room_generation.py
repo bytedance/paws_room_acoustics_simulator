@@ -24,18 +24,23 @@ def get_next_pos(x,y):
 def draw_wall(wall_set,room_pos,grid_data,padding_coef=0.1,wall_coef=0.1,class_id=1):
     #画墙壁
 
-    room_size = grid_data.shape[0]
-    pad_size = math.floor(room_size * padding_coef)
-    room_nopad = room_size - pad_size*2
+    
+    Nx = grid_data.shape[0]
+    x_pad = math.floor(Nx * padding_coef)
+    x_nopad = Nx - x_pad*2
+    
+    Ny = grid_data.shape[0]
+    y_pad = math.floor(Ny * padding_coef)
+    y_nopad = Ny - y_pad*2
 
     x_range,y_range= room_pos.max(0) - room_pos.min(0)
     x_min, y_min = room_pos.min(0)
 
-    size_room_x = math.floor(room_nopad / (x_range+1))
-    size_room_y = math.floor(room_nopad / (y_range+1))
+    size_room_x = math.floor(x_nopad / (x_range+1))
+    size_room_y = math.floor(y_nopad / (y_range+1))
 
     size_wall_x = math.floor(size_room_x*wall_coef/2)
-    size_wall_y = math.floor(size_room_x*wall_coef/2)
+    size_wall_y = math.floor(size_room_y*wall_coef/2)
 
     # print("size_room_x = ",size_room_x)
     # print("size_room_y = ",size_room_y)
@@ -69,19 +74,19 @@ def draw_wall(wall_set,room_pos,grid_data,padding_coef=0.1,wall_coef=0.1,class_i
         y_1 -= size_wall_x
         y_2 += size_wall_y
 
-        x_1 += pad_size
-        x_2 += pad_size
-        y_1 += pad_size
-        y_2 += pad_size
+        x_1 += x_pad
+        x_2 += x_pad
+        y_1 += y_pad
+        y_2 += y_pad
 
         # print("x_1,y_1 = ",x_1,y_1)
         # print("x_2,y_2 = ",x_2,y_2)
         # print("-----")
 
-        for x_t in range(max(x_1,pad_size),min(x_2,room_nopad+pad_size)):
-            for y_t in range(max(y_1,pad_size),min(y_2,room_nopad+pad_size)):
+        for x_t in range(max(x_1,x_pad),min(x_2,x_pad+x_nopad)):
+            for y_t in range(max(y_1,y_pad),min(y_2,y_pad+y_nopad)):
 
-                grid_data[x_t][y_t] = class_id
+                grid_data[y_t][x_t] = class_id
 
     return grid_data
 
@@ -225,7 +230,8 @@ def try_add_obstacle(grid_data,valid_mask,class_id,minimun_gap = 10,max_attempt=
     return grid_data
 
 
-def shoe_box_pipeline(room_size = 256,
+def shoe_box_pipeline(Nx = 256,
+                      Ny = 256,
                       padding_coef = 0.1,
                       wall_coef = 0.1,
                       max_subroom=8,
@@ -293,9 +299,7 @@ def shoe_box_pipeline(room_size = 256,
 
 
     #初始化grid
-    # room_size = 256
-
-    grid_data = [[0]*room_size]*room_size
+    grid_data = [[0]*Ny]*Nx
     grid_data = np.array(grid_data)
 
 
@@ -453,12 +457,12 @@ def draw_polygon(grid_data,points,line_size,class_id):
 
                 if dist < line_size:
                     grid_data[x][y] = class_id
-
     
     return grid_data
 
 
-def polygon_pipeline(room_size = 256,
+def polygon_pipeline(Nx = 256,
+                     Ny = 256,
                      padding_coef = 0.1,
                      max_obstacle=10,
                      edge_n_range=[5,10],
@@ -467,13 +471,13 @@ def polygon_pipeline(room_size = 256,
                     ):
     
     #初始化grid
-    grid_data = [[0]*room_size]*room_size
+    grid_data = [[0]*Ny]*Nx
     grid_data = np.array(grid_data)
 
     #画墙壁
     padding_coef = 0.1
 
-    room_size = grid_data.shape[0]
+    room_size = min(Nx,Ny)
     pad_size = math.floor(room_size * padding_coef)
     room_nopad = room_size - pad_size*2
 
@@ -482,7 +486,7 @@ def polygon_pipeline(room_size = 256,
 
 
     while True:
-        points = random_polygon(edge_num, [80, 80], [60, 80])
+        points = random_polygon(edge_num, [80, 80], [60,80])
 
         if np.min(points.max(0) - points.min(0)) > 40:
             break
@@ -494,7 +498,7 @@ def polygon_pipeline(room_size = 256,
     x_range,y_range = points.max(0) - points.min(0)
     scale = room_nopad / max(x_range,y_range)
     points *= scale
-    points += room_size/2
+    points += [Nx/2,Ny/2]
 
 
 
@@ -510,14 +514,14 @@ def polygon_pipeline(room_size = 256,
 
     # # show demo of sampled area
     # plt.figure()
-    # plt.imshow(np.squeeze(grid_display), aspect='equal', cmap='gray')
+    # plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
     # plt.xlabel('x-position [m]')
     # plt.ylabel('y-position [m]')
     # plt.title('generated room')
     # plt.show()
 
 
-    valid_mask = [[0]*room_size]*room_size
+    valid_mask = [[0]*Nx]*Ny
     valid_mask = np.array(valid_mask)
 
     valid_mask = cv2.fillPoly(valid_mask,np.int32([points]),1)
