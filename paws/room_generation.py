@@ -29,7 +29,7 @@ def draw_wall(wall_set,room_pos,grid_data,padding_coef=0.1,wall_coef=0.1,class_i
     x_pad = math.floor(Nx * padding_coef)
     x_nopad = Nx - x_pad*2
     
-    Ny = grid_data.shape[0]
+    Ny = grid_data.shape[1]
     y_pad = math.floor(Ny * padding_coef)
     y_nopad = Ny - y_pad*2
 
@@ -150,19 +150,24 @@ def random_merge_room(room_list:list,wall_set:set,keep_prob:float):
 
 def get_valid_mask(room_pos,grid_data,padding_coef=0.1):
     
-    room_size = grid_data.shape[0]
-    pad_size = math.floor(room_size * padding_coef)
-    room_nopad = room_size - pad_size*2
+    Nx = grid_data.shape[0]
+    Ny = grid_data.shape[1]
+    
+    pad_size_x = math.floor(Nx * padding_coef)
+    room_nopad_x = Nx - pad_size_x*2
+    
+    pad_size_y = math.floor(Ny * padding_coef)
+    room_nopad_y = Ny - pad_size_y*2
 
 
-    valid_mask = [[0]*room_size]*room_size
-    valid_mask = np.array(grid_data)
+    valid_mask = [[0]*Ny]*Nx
+    valid_mask = np.array(valid_mask)
 
     x_range,y_range= room_pos.max(0) - room_pos.min(0)
     x_min, y_min = room_pos.min(0)
 
-    size_room_x = math.floor(room_nopad / (x_range+1))
-    size_room_y = math.floor(room_nopad / (y_range+1))
+    size_room_x = math.floor(room_nopad_x / (x_range+1))
+    size_room_y = math.floor(room_nopad_y / (y_range+1))
 
     # print("size_room_x = ",size_room_x)
     # print("size_room_y = ",size_room_y)
@@ -177,14 +182,14 @@ def get_valid_mask(room_pos,grid_data,padding_coef=0.1):
         x = math.floor(x)
         y = math.floor(y)
 
-        x += pad_size
-        y += pad_size
+        x += pad_size_x
+        y += pad_size_y
 
 
         for x_t in range(x,x + size_room_x):
             for y_t in range(y, y + size_room_y):
 
-                valid_mask[x_t][y_t] = 1
+                valid_mask[y_t][x_t] = 1
 
     return valid_mask
 
@@ -318,25 +323,6 @@ def shoe_box_pipeline(Nx = 256,
     grid_data = draw_wall(outer_wall_set,room_pos_new,grid_data,padding_coef,wall_coef,wall_class_id)
 
     valid_mask = get_valid_mask(room_pos_new,grid_data,padding_coef)
-
-
-    # # show demo of sampled area
-    # plt.figure()
-    # plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
-    # plt.xlabel('x-position [m]')
-    # plt.ylabel('y-position [m]')
-    # plt.title('generated room')
-    # plt.show()
-
-
-    # # show demo of sampled area
-    # plt.figure()
-    # plt.imshow(np.squeeze(valid_mask), aspect='equal', cmap='gray')
-    # plt.xlabel('x-position [m]')
-    # plt.ylabel('y-position [m]')
-    # plt.title('generated room')
-    # plt.show()
-
 
     #生成障碍物
 
