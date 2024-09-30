@@ -330,22 +330,22 @@ def shoe_box_pipeline(Nx = 256,
 
     valid_mask = get_valid_mask(room_pos_new,grid_data,padding_coef)
     
-    # show demo of sampled area
-    plt.figure()
-    plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
-    plt.xlabel('x-position [m]')
-    plt.ylabel('y-position [m]')
-    plt.title('generated room')
-    plt.show()
+    # # show demo of sampled area
+    # plt.figure()
+    # plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
+    # plt.xlabel('x-position [m]')
+    # plt.ylabel('y-position [m]')
+    # plt.title('generated room')
+    # plt.show()
 
 
-    # show demo of sampled area
-    plt.figure()
-    plt.imshow(np.squeeze(valid_mask), aspect='equal', cmap='gray')
-    plt.xlabel('x-position [m]')
-    plt.ylabel('y-position [m]')
-    plt.title('generated room')
-    plt.show()
+    # # show demo of sampled area
+    # plt.figure()
+    # plt.imshow(np.squeeze(valid_mask), aspect='equal', cmap='gray')
+    # plt.xlabel('x-position [m]')
+    # plt.ylabel('y-position [m]')
+    # plt.title('generated room')
+    # plt.show()
 
     #生成障碍物
 
@@ -355,13 +355,13 @@ def shoe_box_pipeline(Nx = 256,
         grid_data = try_add_obstacle(grid_data,valid_mask,class_id)
 
 
-    # show demo of sampled area
-    plt.figure()
-    plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
-    plt.xlabel('x-position [m]')
-    plt.ylabel('y-position [m]')
-    plt.title('generated room')
-    plt.show()
+    # # show demo of sampled area
+    # plt.figure()
+    # plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
+    # plt.xlabel('x-position [m]')
+    # plt.ylabel('y-position [m]')
+    # plt.title('generated room')
+    # plt.show()
 
 
     return grid_data,valid_mask
