@@ -42,6 +42,10 @@ def draw_wall(wall_set,room_pos,grid_data,padding_coef=0.1,wall_coef=0.1,class_i
     size_wall_x = math.floor(size_room_x*wall_coef/2)
     size_wall_y = math.floor(size_room_y*wall_coef/2)
 
+
+    print("Nx = ",Nx)
+    print("Ny = ",Ny)
+    print("shape = ",grid_data.shape)
     # print("size_room_x = ",size_room_x)
     # print("size_room_y = ",size_room_y)
     # print("size_wall_x = ",size_wall_x)
@@ -71,7 +75,7 @@ def draw_wall(wall_set,room_pos,grid_data,padding_coef=0.1,wall_coef=0.1,class_i
 
         x_1 -= size_wall_x
         x_2 += size_wall_x
-        y_1 -= size_wall_x
+        y_1 -= size_wall_y
         y_2 += size_wall_y
 
         x_1 += x_pad
@@ -82,11 +86,13 @@ def draw_wall(wall_set,room_pos,grid_data,padding_coef=0.1,wall_coef=0.1,class_i
         # print("x_1,y_1 = ",x_1,y_1)
         # print("x_2,y_2 = ",x_2,y_2)
         # print("-----")
-
+        print(wall)
+        
         for x_t in range(max(x_1,x_pad),min(x_2,x_pad+x_nopad)):
             for y_t in range(max(y_1,y_pad),min(y_2,y_pad+y_nopad)):
 
-                grid_data[y_t][x_t] = class_id
+                grid_data[x_t][y_t] = class_id
+        
 
     return grid_data
 
@@ -189,7 +195,7 @@ def get_valid_mask(room_pos,grid_data,padding_coef=0.1):
         for x_t in range(x,x + size_room_x):
             for y_t in range(y, y + size_room_y):
 
-                valid_mask[y_t][x_t] = 1
+                valid_mask[x_t][y_t] = 1
 
     return valid_mask
 
@@ -204,7 +210,7 @@ def try_add_obstacle(grid_data,valid_mask,class_id,minimun_gap = 10,max_attempt=
     y_size = random.randint(2,math.floor(y_range/10))
 
     x_pos = random.randint(x_size + minimun_gap, x_range - x_size - minimun_gap)
-    y_pos = random.randint(y_size + minimun_gap, x_range - y_size - minimun_gap)
+    y_pos = random.randint(y_size + minimun_gap, y_range - y_size - minimun_gap)
 
     # print(x_pos,y_pos)
     # print(x_size,y_size)
@@ -215,7 +221,7 @@ def try_add_obstacle(grid_data,valid_mask,class_id,minimun_gap = 10,max_attempt=
             break
         
         x_pos = random.randint(x_size + minimun_gap, x_range - x_size - minimun_gap)
-        y_pos = random.randint(y_size + minimun_gap, x_range - y_size - minimun_gap)
+        y_pos = random.randint(y_size + minimun_gap, y_range - y_size - minimun_gap)
 
         max_attempt -= 1
 
@@ -323,6 +329,23 @@ def shoe_box_pipeline(Nx = 256,
     grid_data = draw_wall(outer_wall_set,room_pos_new,grid_data,padding_coef,wall_coef,wall_class_id)
 
     valid_mask = get_valid_mask(room_pos_new,grid_data,padding_coef)
+    
+    # show demo of sampled area
+    plt.figure()
+    plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
+    plt.xlabel('x-position [m]')
+    plt.ylabel('y-position [m]')
+    plt.title('generated room')
+    plt.show()
+
+
+    # show demo of sampled area
+    plt.figure()
+    plt.imshow(np.squeeze(valid_mask), aspect='equal', cmap='gray')
+    plt.xlabel('x-position [m]')
+    plt.ylabel('y-position [m]')
+    plt.title('generated room')
+    plt.show()
 
     #生成障碍物
 
@@ -332,13 +355,13 @@ def shoe_box_pipeline(Nx = 256,
         grid_data = try_add_obstacle(grid_data,valid_mask,class_id)
 
 
-    # # show demo of sampled area
-    # plt.figure()
-    # plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
-    # plt.xlabel('x-position [m]')
-    # plt.ylabel('y-position [m]')
-    # plt.title('generated room')
-    # plt.show()
+    # show demo of sampled area
+    plt.figure()
+    plt.imshow(np.squeeze(grid_data), aspect='equal', cmap='gray')
+    plt.xlabel('x-position [m]')
+    plt.ylabel('y-position [m]')
+    plt.title('generated room')
+    plt.show()
 
 
     return grid_data,valid_mask

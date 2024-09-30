@@ -47,7 +47,7 @@ def class_grid_to_medium_grid(cls_grid:np.ndarray,lookup_dict:dict,base_sound_sp
 
 def sample_source_2d(valid_mask,grid_data,max_attempt = 100,min_gap=3):
     x_range = valid_mask.shape[0]
-    y_range = valid_mask.shape[0]
+    y_range = valid_mask.shape[1]
 
     finished = False
     while max_attempt > 0 and finished == False:
