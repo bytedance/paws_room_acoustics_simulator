@@ -106,6 +106,23 @@ def pipeline(args):
         plt.title('generated room')
         plt.savefig(os.path.join(data_dir,room_type + "_" + current_time + "_cls_id.png"))
 
+        # # show demo of valid mask
+        # plt.figure()
+        # plt.imshow(np.squeeze(valid_mask), aspect='equal', cmap='gray')
+        # plt.xlabel('x-position [m]')
+        # plt.ylabel('y-position [m]')
+        # plt.title('generated room')
+        # plt.savefig(os.path.join(data_dir,room_type + "_" + current_time + "_valid_mask.png"))
+
+
+        medium = class_grid_to_medium_grid(cls_grid,class_id_dict)
+
+        #save medium data
+        medium_save_pth = os.path.join(data_dir,room_type + "_" + current_time + "_medium.npy")
+        medium_data = {"sound_speed":medium.sound_speed,
+                        "density":medium.density}
+        np.save(medium_save_pth,medium_data)
+        
 
         ##for each source
         for sample_id in range(source_n):
@@ -113,9 +130,9 @@ def pipeline(args):
             save_filename_prefix = room_type + "_" + current_time + "_" + str(sample_id)
             # save_path = os.path.join(save_dir,save_filename)
 
-            medium = class_grid_to_medium_grid(cls_grid,class_id_dict)
+            
             sensor = make_sensor_2d(np.ones([Nx,Ny],dtype=bool))
-
+            
             source_x,source_y = sample_source_2d(valid_mask,cls_grid)
             source = make_source_2d(source_x,source_y,2,Nx,Ny,5)
             print("source_x = ",source_x)
