@@ -11,7 +11,7 @@ from paws.room_generation import shoe_box_pipeline,polygon_pipeline
 
 from paws.data_to_mp4 import encode_tensor_to_video, encode_hdf5_to_video
 
-from paws.model_to_grid import make_source_2d, class_grid_to_medium_grid, make_sensor_2d, simulation_2d,sample_source_2d
+from paws.model_to_grid import make_source_2d, class_grid_to_medium_grid, make_sensor_2d, simulation_2d,sample_source_2d,make_sensor_3d,make_source_3d,simulation_3d,make_medium_3d
 
 
 
@@ -81,6 +81,15 @@ def pipeline(args):
                     }
     
     
+    #parameter string
+    para_list = ["Nx",Nx,"Ny",Ny,"dx",dx,"dy",dy,"Nt",Nt,"dt",dt]
+    para_str = ""
+    for element in para_list:
+        para_str += str(element) + "_"
+
+    
+    
+    
     #for each scene
     for _ in range(scene_n):
         
@@ -88,14 +97,14 @@ def pipeline(args):
 
         #define room
         if room_type == "shoe_box":
-            cls_grid,valid_mask = shoe_box_pipeline(Nx,Ny,0.1,0.1,8,10,class_id_range,[1,2,6])
+            cls_grid,valid_mask,sample_ref = shoe_box_pipeline(Nx,Ny,0.1,0.1,8,10,class_id_range,[1,2,6])
 
         elif room_type == "polygon":
             cls_grid,valid_mask = polygon_pipeline(Nx,Ny,0.1,10,[5,10],class_id_range,[1,2,6])
 
         else:
             print("Invalid room type: ", room_type, ", using shoe_box instead")
-            cls_grid,valid_mask = shoe_box_pipeline(Nx,Ny,0.1,0.1,8,10,class_id_range,[1,2,6])
+            cls_grid,valid_mask,sample_ref = shoe_box_pipeline(Nx,Ny,0.1,0.1,8,10,class_id_range,[1,2,6])
         
 
         # show demo of sampled area
@@ -104,8 +113,18 @@ def pipeline(args):
         plt.xlabel('x-position [m]')
         plt.ylabel('y-position [m]')
         plt.title('generated room')
-        plt.savefig(os.path.join(data_dir,room_type + "_" + current_time + "_cls_id.png"))
+        plt.savefig(os.path.join(data_dir,room_type + "_" + para_str + current_time + "_cls_id.png"))
 
+        
+        plt.figure()
+        plt.imshow(np.squeeze(valid_mask), aspect='equal', cmap='gray')
+        plt.xlabel('x-position [m]')
+        plt.ylabel('y-position [m]')
+        plt.title('generated room')
+        plt.savefig(os.path.join(data_dir,room_type + "_" + para_str + current_time + "_valid_mask.png"))
+
+        
+        quit()
         # # show demo of valid mask
         # plt.figure()
         # plt.imshow(np.squeeze(valid_mask), aspect='equal', cmap='gray')
@@ -138,14 +157,15 @@ def pipeline(args):
             print("source_x = ",source_x)
             print("source_y = ",source_y)
 
-            input_filename = current_time+"_kwave_input.h5"
-            output_filename = current_time+"_kwave_output.h5"
+            input_filename = save_filename_prefix + "_" + para_str + current_time+"_kwave_input.h5"
+            output_filename = save_filename_prefix +"_" + para_str + current_time+"_kwave_output.h5"
 
             #generate hdf5 file
             simulation_2d(Nx,Ny,dx,dy,source,medium,sensor,Nt,dt,
                           data_path=temp_file_dir,
                           output_filename=output_filename,
                           input_fileneme=input_filename,
+                          return_tensor=False
                          )
 
             hdf5_input_path = os.path.join(temp_file_dir,input_filename)
@@ -161,6 +181,108 @@ def pipeline(args):
     return
 
 
+def pipeline_3d(args):
+    
+    print(args)
+    
+    #define basic parameter
+    Nx = args.Nx
+    Ny = args.Ny
+    Nz = args.Nz
+    
+    dx = args.dx
+    dy = args.dy
+    dz = args.dz
+    
+    Nt = args.Nt
+    dt = args.dt
+    
+    scene_n = args.scene_n
+    source_n = args.source_n
+    
+    down_sample_ratio = args.down_sample_ratio
+    room_type = '3d_sample_room'
+    save_dir = args.save_dir
+    keep_temp = args.keep_temp
+    
+    #get base path
+    if save_dir == None:
+        save_dir = os.getcwd()
+    
+    #define path
+    temp_file_dir = os.path.join(save_dir,"temp_hdf5")
+    path_validation(temp_file_dir)
+
+    # save_dir = "/home/tianming/PAWS-dataset/" + room_type
+    data_dir = os.path.join(save_dir,"generated_data")
+    path_validation(data_dir)
+    
+        
+    current_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+
+    #define a box room 
+
+    sound_speed_grid = np.ones((Nx, Ny, Nz), dtype=float) * 343
+    density_grid = np.ones((Nx, Ny, Nz), dtype=float) * 100
+    alpha_grid = np.ones((Nx, Ny, Nz), dtype=float) * 0.75
+    
+    for x in range(Nx):
+        for y in range(Ny):
+            for z in range(Nz):
+            
+                if  abs(x - 64) <= 3 or abs(y - 64) <= 3 or abs(z - 64) or abs(x - 192) <= 3 or abs(y - 192) <= 3 or abs(z - 192) <= 3:   
+                    
+                    density,sound_speed,alpha = 2000,800,0.75
+                    sound_speed_grid[x][y][z] = sound_speed
+                    density_grid[x][y][z] = density
+                    alpha_grid[x][y][z] = alpha
+    
+    
+    medium = make_medium_3d(sound_speed_grid,density_grid,alpha_grid)
+    
+    save_filename_prefix = room_type 
+
+    
+    sensor = make_sensor_3d(np.ones([Nx,Ny,Nz],dtype=bool))
+    
+    source_x = 100
+    source_y = 140
+    source_z = 70
+
+    source = make_source_3d(source_x,source_y,source_z,4,Nx,Ny,Nz,5)
+    
+    print("source_x = ",source_x)
+    print("source_y = ",source_y)
+    print("source_z = ",source_z)
+    
+    #parameter string
+    para_list = ["Nx",Nx,"Ny",Ny,"Nz",Nz,"dx",dx,"dy",dy,"dz",dz,"Nt",Nt,"dt",dt]
+    para_str = ""
+    for element in para_list:
+        para_str += str(element) + "_"
+
+    input_filename = save_filename_prefix + "_" + para_str + current_time+"_kwave_input.h5"
+    output_filename = save_filename_prefix +"_" + para_str + current_time+"_kwave_output.h5"
+
+    #generate hdf5 file
+    simulation_3d(Nx,Ny,Nx,dx,dy,dz,source,medium,sensor,Nt,dt,
+                    data_path=temp_file_dir,
+                    output_filename=output_filename,
+                    input_fileneme=input_filename,
+                    return_tensor=False
+                    )
+
+    hdf5_input_path = os.path.join(temp_file_dir,input_filename)
+    hdf5_output_path = os.path.join(temp_file_dir,output_filename)
+
+    # encode_hdf5_to_video(hdf5_output_path,data_dir,Nx,Ny,save_filename_prefix,down_sample_ratio)
+
+    #optional: remove hdf5 file
+    if not keep_temp:
+        os.remove(hdf5_input_path)
+        os.remove(hdf5_output_path)
+
+    return
 
 def old_pipeline():
 
@@ -319,6 +441,9 @@ if __name__ == "__main__":
                         help='The size of grid along y-axis', default=2e-2)
     parser.add_argument("--dz",type=float,
                         help='The size of grid along z-axis', default=2e-2)
+    
+    parser.add_argument('--dimension', choices=['2d', '3d'], default='2d',
+                        help='The dimension of the simulation')
 
     parser.add_argument("--Nt",type=int,
                         help='The total number of frame in simulation', default=1000)
@@ -341,8 +466,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    pipeline(args)
+    if args.dimension == '2d':
+        pipeline(args)
     
+    elif args.dimension == '3d':
+        pipeline_3d(args)
+
 
 
 
