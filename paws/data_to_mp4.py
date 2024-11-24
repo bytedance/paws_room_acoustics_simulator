@@ -89,7 +89,7 @@ def encode_tensor_to_video(tensor, video_path, fps=100):
         filename=video_path, 
         fourcc=cv2.VideoWriter_fourcc(*'MP4V'),
         fps=fps, 
-        frameSize=(height, width), 
+        frameSize=(width, height), 
         isColor=False
     )
 
@@ -128,7 +128,7 @@ def encode_hdf5_to_video(hdf5_path,
             filename=video_path, 
             fourcc=cv2.VideoWriter_fourcc(*'mp4v'),
             fps=fps, 
-            frameSize=(height, width), 
+            frameSize=(width, height), 
             isColor=False
         )
 
