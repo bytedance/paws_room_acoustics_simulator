@@ -54,7 +54,3 @@ def read_obj(path,Nx,Ny,Nz,padding_coef,base_sound_speed,base_density,base_alpha
 
     return sound_speed_grid,density_grid,alpha_grid
     
-
-
-#         #show all of them
-#         o3d.visualization.draw_geometries(mesh_list)
