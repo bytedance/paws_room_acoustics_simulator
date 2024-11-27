@@ -200,6 +200,66 @@ def get_valid_mask(room_pos,grid_data,padding_coef=0.1):
     return valid_mask
 
 
+def get_sample_ref(
+    Nx,
+    Ny,
+    padding_coef,
+    room_pos
+):
+    
+    #输出每个subroom中心点与靠近边界的8个点（九宫格）
+    sample_point_ref = {"center":[],"margin":[]}
+    
+    #计算生成的subroom的大小
+    x_pad = math.floor(Nx * padding_coef)
+    x_nopad = Nx - x_pad*2
+    
+    y_pad = math.floor(Ny * padding_coef)
+    y_nopad = Ny - y_pad*2
+
+    x_range,y_range= room_pos.max(0) - room_pos.min(0)
+    x_min, y_min = room_pos.min(0)
+
+    size_room_x = math.floor(x_nopad / (x_range+1))
+    size_room_y = math.floor(y_nopad / (y_range+1))
+    
+    # print(size_room_x)
+    # print(size_room_y)
+    
+    #计算采样点的位置
+    for pos in room_pos:
+        
+        x_1 = pos[0] - x_min
+        y_1 = pos[1] - y_min
+        x_1 *= size_room_x
+        y_1 *= size_room_y
+        x_1 += size_room_x/2
+        y_1 += size_room_y/2
+        x_1 = math.floor(x_1)
+        y_1 = math.floor(y_1)
+        x_1 += x_pad
+        y_1 += y_pad
+        
+        
+        center_x = x_1
+        center_y = y_1
+        bias_x = math.floor(size_room_x/2 * 0.8)
+        bias_y = math.floor(size_room_y/2 * 0.8)
+        sample_point_ref["center"].append([center_x,center_y])
+        sample_point_ref["margin"].append([center_x + bias_x,center_y + bias_y])
+        sample_point_ref["margin"].append([center_x + bias_x,center_y - bias_y])
+        sample_point_ref["margin"].append([center_x - bias_x,center_y + bias_y])
+        sample_point_ref["margin"].append([center_x - bias_x,center_y - bias_y])
+        
+        # grid_data[center_x][center_y] = 10
+        # grid_data[center_x + bias_x][center_y + bias_y] = 10
+        # grid_data[center_x + bias_x][center_y - bias_y] = 10
+        # grid_data[center_x - bias_x][center_y - bias_y] = 10
+        # grid_data[center_x - bias_x][center_y + bias_y] = 10
+        
+    return sample_point_ref
+
+
 def try_add_obstacle(grid_data,valid_mask,class_id,minimun_gap = 10,max_attempt=100):
 
     x_range = grid_data.shape[0]
@@ -251,7 +311,7 @@ def shoe_box_pipeline(Nx = 256,
                       max_subroom=8,
                       max_obstacle=10,
                       class_id_range=[1,7],
-                      wall_class_choice=None
+                      wall_class_choice=None,
                     #   sample_point_ref = False
                       ):
 
@@ -315,56 +375,8 @@ def shoe_box_pipeline(Nx = 256,
     #初始化grid
     grid_data = [[0]*Ny]*Nx
     grid_data = np.array(grid_data)
-    
-    #输出每个subroom中心点与靠近边界的8个点（九宫格）
-    sample_point_ref = {"center":[],"margin":[]}
-    
-    #计算生成的subroom的大小
-    x_pad = math.floor(Nx * padding_coef)
-    x_nopad = Nx - x_pad*2
-    
-    y_pad = math.floor(Ny * padding_coef)
-    y_nopad = Ny - y_pad*2
 
-    x_range,y_range= room_pos_new.max(0) - room_pos_new.min(0)
-    x_min, y_min = room_pos_new.min(0)
-
-    size_room_x = math.floor(x_nopad / (x_range+1))
-    size_room_y = math.floor(y_nopad / (y_range+1))
-    
-    # print(size_room_x)
-    # print(size_room_y)
-    
-    #计算采样点的位置
-    for pos in room_pos_new:
-        
-        x_1 = pos[0] - x_min
-        y_1 = pos[1] - y_min
-        x_1 *= size_room_x
-        y_1 *= size_room_y
-        x_1 += size_room_x/2
-        y_1 += size_room_y/2
-        x_1 = math.floor(x_1)
-        y_1 = math.floor(y_1)
-        x_1 += x_pad
-        y_1 += y_pad
-        
-        
-        center_x = x_1
-        center_y = y_1
-        bias_x = math.floor(size_room_x/2 * 0.8)
-        bias_y = math.floor(size_room_y/2 * 0.8)
-        sample_point_ref["center"].append([center_x,center_y])
-        sample_point_ref["margin"].append([center_x + bias_x,center_y + bias_y])
-        sample_point_ref["margin"].append([center_x + bias_x,center_y - bias_y])
-        sample_point_ref["margin"].append([center_x - bias_x,center_y + bias_y])
-        sample_point_ref["margin"].append([center_x - bias_x,center_y - bias_y])
-        
-        # grid_data[center_x][center_y] = 10
-        # grid_data[center_x + bias_x][center_y + bias_y] = 10
-        # grid_data[center_x + bias_x][center_y - bias_y] = 10
-        # grid_data[center_x - bias_x][center_y - bias_y] = 10
-        # grid_data[center_x - bias_x][center_y + bias_y] = 10
+    sample_point_ref = get_sample_ref(Nx,Ny,padding_coef,room_pos_new)
         
     # print(room_pos_new)
     # print(sample_point_ref)
