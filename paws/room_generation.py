@@ -200,11 +200,72 @@ def get_valid_mask(room_pos,grid_data,padding_coef=0.1):
     return valid_mask
 
 
+def get_sample_ref(
+    Nx,
+    Ny,
+    padding_coef,
+    room_pos
+):
+    
+    #输出每个subroom中心点与靠近边界的8个点（九宫格）
+    sample_point_ref = {"center":[],"margin":[]}
+    
+    #计算生成的subroom的大小
+    x_pad = math.floor(Nx * padding_coef)
+    x_nopad = Nx - x_pad*2
+    
+    y_pad = math.floor(Ny * padding_coef)
+    y_nopad = Ny - y_pad*2
+
+    x_range,y_range= room_pos.max(0) - room_pos.min(0)
+    x_min, y_min = room_pos.min(0)
+
+    size_room_x = math.floor(x_nopad / (x_range+1))
+    size_room_y = math.floor(y_nopad / (y_range+1))
+    
+    # print(size_room_x)
+    # print(size_room_y)
+    
+    #计算采样点的位置
+    for pos in room_pos:
+        
+        x_1 = pos[0] - x_min
+        y_1 = pos[1] - y_min
+        x_1 *= size_room_x
+        y_1 *= size_room_y
+        x_1 += size_room_x/2
+        y_1 += size_room_y/2
+        x_1 = math.floor(x_1)
+        y_1 = math.floor(y_1)
+        x_1 += x_pad
+        y_1 += y_pad
+        
+        
+        center_x = x_1
+        center_y = y_1
+        bias_x = math.floor(size_room_x/2 * 0.8)
+        bias_y = math.floor(size_room_y/2 * 0.8)
+        sample_point_ref["center"].append([center_x,center_y])
+        sample_point_ref["margin"].append([center_x + bias_x,center_y + bias_y])
+        sample_point_ref["margin"].append([center_x + bias_x,center_y - bias_y])
+        sample_point_ref["margin"].append([center_x - bias_x,center_y + bias_y])
+        sample_point_ref["margin"].append([center_x - bias_x,center_y - bias_y])
+        
+        # grid_data[center_x][center_y] = 10
+        # grid_data[center_x + bias_x][center_y + bias_y] = 10
+        # grid_data[center_x + bias_x][center_y - bias_y] = 10
+        # grid_data[center_x - bias_x][center_y - bias_y] = 10
+        # grid_data[center_x - bias_x][center_y + bias_y] = 10
+        
+    return sample_point_ref
+
+
 def try_add_obstacle(grid_data,valid_mask,class_id,minimun_gap = 10,max_attempt=100):
 
     x_range = grid_data.shape[0]
     y_range = grid_data.shape[1]
-
+    # print(valid_mask.shape)
+    # print(grid_data.shape)
 
     x_size = random.randint(2,math.floor(x_range/10))
     y_size = random.randint(2,math.floor(y_range/10))
@@ -212,10 +273,12 @@ def try_add_obstacle(grid_data,valid_mask,class_id,minimun_gap = 10,max_attempt=
     x_pos = random.randint(x_size + minimun_gap, x_range - x_size - minimun_gap)
     y_pos = random.randint(y_size + minimun_gap, y_range - y_size - minimun_gap)
 
-    # print(x_pos,y_pos)
-    # print(x_size,y_size)
+    
 
     while max_attempt > 0:
+        
+        # print(x_pos,y_pos)
+        # print(x_size,y_size)
 
         if valid_mask[x_pos][y_pos] == 1:
             break
@@ -248,7 +311,8 @@ def shoe_box_pipeline(Nx = 256,
                       max_subroom=8,
                       max_obstacle=10,
                       class_id_range=[1,7],
-                      wall_class_choice=None
+                      wall_class_choice=None,
+                    #   sample_point_ref = False
                       ):
 
     room_pos = set()
@@ -303,8 +367,7 @@ def shoe_box_pipeline(Nx = 256,
 
     room_pos_new = np.array(room_pos_new)
     # print(room_pos_new)
-
-
+    
     #randomly break wall
     inner_wall_set = random_merge_room(room_pos_new.tolist(),inner_wall_set,0.8)
 
@@ -312,6 +375,11 @@ def shoe_box_pipeline(Nx = 256,
     #初始化grid
     grid_data = [[0]*Ny]*Nx
     grid_data = np.array(grid_data)
+
+    sample_point_ref = get_sample_ref(Nx,Ny,padding_coef,room_pos_new)
+        
+    # print(room_pos_new)
+    # print(sample_point_ref)
 
 
     #画墙壁
@@ -364,7 +432,7 @@ def shoe_box_pipeline(Nx = 256,
     # plt.show()
 
 
-    return grid_data,valid_mask
+    return grid_data,valid_mask,sample_point_ref
 
 
 
@@ -446,8 +514,8 @@ def draw_polygon(grid_data,points,line_size,class_id):
         point1 = points[i]
         point2 = points[i-1]
 
-        print(point1)
-        print(point2)
+        # print(point1)
+        # print(point2)
 
         x_min = math.floor(min(point1[0],point2[0]))
         x_max = math.ceil(max(point1[0],point2[0]))
@@ -500,6 +568,10 @@ def polygon_pipeline(Nx = 256,
         if np.min(points.max(0) - points.min(0)) > 40:
             break
 
+    
+    print(points)
+    print(points.max(0))
+    print(points.min(0))
         
 
     points -= (points.max(0) + points.min(0))/2
@@ -509,7 +581,9 @@ def polygon_pipeline(Nx = 256,
     points *= scale
     points += [Nx/2,Ny/2]
 
-
+    print(points)
+    print(points.max(0))
+    print(points.min(0))
 
     if wall_class_choice != None:
         wall_class_id = random.choice(wall_class_choice)
@@ -530,11 +604,10 @@ def polygon_pipeline(Nx = 256,
     # plt.show()
 
 
-    valid_mask = [[0]*Nx]*Ny
+    valid_mask = [[0]*Ny]*Nx
     valid_mask = np.array(valid_mask)
 
-    valid_mask = cv2.fillPoly(valid_mask,np.int32([points]),1)
-    valid_mask = np.transpose(valid_mask)
+    valid_mask = cv2.fillPoly(np.int32(valid_mask),np.int32([np.flip(points)]),1)
 
     # # show demo of sampled area
     # plt.figure()

@@ -13,7 +13,7 @@ from kwave.utils.colormap import get_color_map
 from kwave.utils.signals import tone_burst
 
 import random
-# import open3d.core as o3c
+# import open3d as o3d
 
 import os
 import math
@@ -41,6 +41,12 @@ def class_grid_to_medium_grid(cls_grid:np.ndarray,lookup_dict:dict,base_sound_sp
             density_grid[x][y] = density
             alpha_grid[x][y] = alpha
             
+    medium = kWaveMedium(sound_speed=sound_speed_grid, density=density_grid, alpha_coeff=alpha_grid, alpha_power=1.5,absorbing=True,stokes=True)
+    
+    return medium
+
+def make_medium_3d(sound_speed_grid,density_grid,alpha_grid):
+    
     medium = kWaveMedium(sound_speed=sound_speed_grid, density=density_grid, alpha_coeff=alpha_grid, alpha_power=1.5,absorbing=True,stokes=True)
     
     return medium
@@ -82,6 +88,22 @@ def make_source_2d(x_pos:int,y_pos:int,radius:int,Nx:int,Ny:int,magnitude:int):
 
     return source
 
+def make_source_3d(x_pos:int,y_pos:int,z_pos:int,radius:int,Nx:int,Ny:int,Nz:int,magnitude:int):
+
+    #initial source
+    source = kSource()
+    p0 = np.zeros((Nx, Ny, Nz), dtype=float)
+
+    for x in range(x_pos-radius-1,x_pos+radius+1):
+        for y in range(y_pos-radius-1,y_pos+radius+1):
+            for z in range(z_pos-radius-1,z_pos+radius+1):
+                if (x+0.5-x_pos)**2 + (y+0.5-y_pos)**2 + (z+0.5-z_pos)**2< radius:
+                    p0[x,y,z] = magnitude
+
+    source.p0 = p0
+
+    return source
+
 
 def make_new_source(p0,p,ux,uy,Nx:int,Ny:int):
     #initial source
@@ -96,6 +118,13 @@ def make_new_source(p0,p,ux,uy,Nx:int,Ny:int):
 
 
 def make_sensor_2d(sensor_mask):
+    sensor = kSensor()
+    sensor.mask = sensor_mask
+    sensor.record = ["p","u"]
+
+    return sensor
+
+def make_sensor_3d(sensor_mask):
     sensor = kSensor()
     sensor.mask = sensor_mask
     sensor.record = ["p","u"]
